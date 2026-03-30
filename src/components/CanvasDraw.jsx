@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { saveAs } from '../utils/helpers'
-import { preprocessCanvas } from '../services/preprocess'
+import { preprocessCanvas, get28x28Data } from '../services/preprocess'
 import { predictFromCanvas } from '../services/model'
 
 export default function CanvasDraw({ onPredict, autoPredict = true }) {
@@ -57,6 +57,12 @@ export default function CanvasDraw({ onPredict, autoPredict = true }) {
   async function predictNow() {
     const c = canvasRef.current
     if (!c) return
+    // provide debug preview
+    const preview = get28x28Data(c)
+    // show preview image in console and call onPredict
+    console.log('28x28 data (first 20):', Array.from(preview.array).slice(0, 20))
+    const imgEl = document.getElementById('preview-img')
+    if (imgEl) imgEl.src = preview.dataUrl
     if (onPredict) onPredict(c)
   }
 
@@ -90,6 +96,16 @@ export default function CanvasDraw({ onPredict, autoPredict = true }) {
         <button onClick={predictNow}>Predict</button>
         <button onClick={saveImage}>Save</button>
       </div>
+      <div className="preview">
+        <img alt="28x28 preview" id="preview-img" style={{marginTop:8,width:84,height:84,background:'#111',borderRadius:6}} />
+      </div>
     </div>
   )
+}
+
+// small effect to update preview img when user predicts
+// Note: this file uses DOM directly to keep changes minimal
+const origAddEventListener = window.addEventListener
+window.addEventListener = function (ev, fn, opt) {
+  origAddEventListener(ev, fn, opt)
 }
